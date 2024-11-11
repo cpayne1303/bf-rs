@@ -1,5 +1,5 @@
 use super::*;
-use rle;
+use crate::rle;
 
 /// Program forms that can be compiled to the peephole AST.
 pub trait PeepholeCompilable {

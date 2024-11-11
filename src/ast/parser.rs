@@ -1,5 +1,5 @@
 use super::*;
-use common::{BfResult, Error};
+use crate::common::{BfResult, Error};
 
 /// Parses Brainfuck concrete syntax into an abstract syntax tree.
 ///
@@ -23,7 +23,7 @@ pub fn parse_program(input: &[u8]) -> BfResult<Box<Program>> {
 type Parser<'a, R> = BfResult<(R, &'a [u8])>;
 
 fn parse_instruction<'a>(mut input: &'a [u8]) -> Parser<Option<Statement>> {
-    use common::Command::*;
+    use crate::common::Command::*;
 
     let ok = |cmd, inp: &'a [u8]| Ok((Some(Statement::Cmd(cmd)), inp));
 

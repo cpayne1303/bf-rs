@@ -1,8 +1,8 @@
 use std::io::{Read, Write};
 
-use state::State;
+use crate::state::State;
 use common::BfResult;
-use traits::Interpretable;
+use crate::traits::Interpretable;
 use super::*;
 
 impl Interpretable for Program {

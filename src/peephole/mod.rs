@@ -10,7 +10,7 @@
 //! instruction. See the [`common::Instruction`](../common/enum.Instruction.html) enum for a list of
 //! the instructions produced by the [peephole compiler](fn.compile.html).
 
-use common;
+use crate::common;
 
 mod interpreter;
 mod compiler;

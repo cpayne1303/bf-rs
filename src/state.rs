@@ -7,8 +7,8 @@ use std::default::Default;
 use std::io::{Read, Write};
 use std::num::Wrapping;
 
-use common::{BfResult, Error};
-use traits::IntoUsize;
+use crate::common::{BfResult, Error};
+use crate::traits::IntoUsize;
 
 /// (`== 30_000`) The default number of 8-bit memory cells, as used by
 /// [`State::new`](struct.State.html#method.new).

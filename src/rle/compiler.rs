@@ -1,5 +1,5 @@
 use super::*;
-use ast;
+use crate::ast;
 
 /// Program forms that can be compiled to the RLE AST.
 pub trait RleCompilable {

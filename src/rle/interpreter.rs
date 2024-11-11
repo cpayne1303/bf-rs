@@ -1,8 +1,8 @@
 use std::io::{Read, Write};
 
-use state::State;
-use common::BfResult;
-use traits::Interpretable;
+use crate::state::State;
+use crate::common::BfResult;
+use crate::traits::Interpretable;
 use super::*;
 
 impl Interpretable for Program {
@@ -32,7 +32,7 @@ fn interpret_instruction<R, W>(instruction: &Statement, state: &mut State,
     where R: Read, W: Write
 {
     use self::Statement::*;
-    use common::Command::*;
+    use crate::common::Command::*;
 
     match *instruction {
         Cmd(Left, count) => state.left(count)?,
