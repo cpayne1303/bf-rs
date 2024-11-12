@@ -1,7 +1,7 @@
 use super::*;
-use peephole;
+use crate::peephole;
 
-use common::{Count, Instruction};
+use crate::common::{Count, Instruction};
 
 /// Program forms that can be compiled to bytecode.
 pub trait BytecodeCompilable {

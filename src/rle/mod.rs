@@ -12,7 +12,7 @@ mod interpreter;
 
 pub use self::compiler::{compile, RleCompilable};
 
-use common::{Command, Count};
+use crate::common::{Command, Count};
 
 /// A run-length encoded BF program is a rose tree of run-length encoded statements.
 pub type Program = [Statement];

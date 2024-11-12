@@ -1,8 +1,8 @@
 use std::io::{Read, Write};
 
-use state::State;
+use crate::state::State;
 use common::BfResult;
-use traits::Interpretable;
+use crate::traits::Interpretable;
 use super::*;
 
 impl Interpretable for Program {
@@ -89,7 +89,7 @@ fn interpret_instruction<R, W>(instructions: &Statement, state: &mut State,
 
 #[cfg(test)]
 mod tests {
-    use test_helpers::*;
+    use crate::test_helpers::*;
 
     #[test]
     fn hello_world() {
@@ -105,9 +105,9 @@ mod tests {
     }
 
     fn assert_parse_interpret(program: &[u8], input: &str, output: &str) {
-        let program = ::ast::parse_program(program).unwrap();
-        let program = ::rle::compile(&program);
-        let program = ::peephole::compile(&program);
+        let program = crate::ast::parse_program(program).unwrap();
+        let program = crate::rle::compile(&program);
+        let program = crate::peephole::compile(&program);
         assert_interpret(&*program, input.as_bytes(), output.as_bytes());
     }
 }

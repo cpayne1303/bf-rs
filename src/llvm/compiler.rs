@@ -1,9 +1,9 @@
 use std::io;
 
-use common::{BfResult, Error, Count};
-use rts::{self, RtsState};
-use state::DEFAULT_CAPACITY;
-use peephole;
+use crate::common::{BfResult, Error, Count};
+use crate::rts::{self, RtsState};
+use crate::state::DEFAULT_CAPACITY;
+use crate::peephole;
 
 use super::wrapper::*;
 
@@ -88,7 +88,7 @@ pub fn compile_and_run<'a>(program: &peephole::Program, memory_size: Option<usiz
 impl<'a> Compiler<'a> {
     fn compile_block(&self, body: &[peephole::Statement]) {
         use peephole::Statement::*;
-        use common::Instruction::*;
+        use crate::common::Instruction::*;
 
         let builder = self.builder;
 

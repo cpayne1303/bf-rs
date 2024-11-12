@@ -2,8 +2,8 @@
 
 use std::str;
 
-use common::BfResult;
-use traits::Interpretable;
+use crate::common::BfResult;
+use crate::traits::Interpretable;
 
 /// Source of the factoring program from `../bf/factor.bf`.
 pub const FACTOR_SRC: &[u8] = include_bytes!("../bf/factor.bf");

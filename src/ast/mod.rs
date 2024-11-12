@@ -13,7 +13,7 @@ mod interpreter;
 
 pub use self::parser::parse_program;
 
-use common::Command;
+use crate::common::Command;
 
 /// A BF program is represented as a slice of statements. The slice will
 /// typically be boxed.

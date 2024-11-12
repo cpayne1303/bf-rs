@@ -3,16 +3,16 @@
 
 use std::io::{Cursor, Read, Write, stdin, stdout};
 
-use common::BfResult;
-use state::State;
+use crate::common::BfResult;
+use crate::state::State;
 
-pub use rle::RleCompilable;
-pub use peephole::PeepholeCompilable;
-pub use bytecode::BytecodeCompilable;
+pub use crate::rle::RleCompilable;
+pub use crate::peephole::PeepholeCompilable;
+pub use crate::bytecode::BytecodeCompilable;
 #[cfg(feature = "jit")]
-pub use jit::JitCompilable;
+pub use crate::jit::JitCompilable;
 #[cfg(feature = "llvm")]
-pub use llvm::LlvmCompilable;
+pub use crate::llvm::LlvmCompilable;
 
 /// Program forms that can be interpreted.
 pub trait Interpretable {

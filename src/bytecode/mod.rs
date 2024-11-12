@@ -15,7 +15,7 @@
 //! perform better because of the cache. So far, it appears
 //! to perform worse than the peephole-optimized AST.
 
-use common;
+use crate::common;
 
 mod compiler;
 mod interpreter;
