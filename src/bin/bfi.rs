@@ -67,10 +67,10 @@ struct NewOptions {
     rle: bool,
     #[clap(long = "byte", help = "Compile AST to bytecode", conflicts_with_all=&["ast", "rle", "jit", "llvm", "unchecked"])]
     bytecode: bool,
-    #[clap(long="peep", default_value_t = true, help = "Interpret the peephole-optimized AST", conflicts_with_all = &["ast", "rle", "bytecode", "jit", "llvm", "unchecked"])]
+    #[clap(long="peep", help = "Interpret the peephole-optimized AST", conflicts_with_all = &["ast", "rle", "bytecode", "jit", "llvm", "unchecked"])]
     peephole: bool,
     #[cfg(feature = "jit")]
-    #[clap(long = "jit", help = "JIT to native x64", conflicts_with_all = &["ast", "rle", "bytecode", "peephole", "llvm"])]
+    #[clap(long = "jit", help = "JIT to native x64 (default)", default_value_t = true, conflicts_with_all = &["ast", "rle", "bytecode", "peephole", "llvm"])]
     jit: bool,
     #[cfg(feature = "llvm")]
     #[clap(long = "llvm", help = "JIT using LLVM", conflicts_with_all = &["ast", "rle", "bytecode", "peephole", "jit", "unchecked"])]
