@@ -55,9 +55,9 @@ fn interpret_instruction<R, W>(instruction: &Statement, state: &mut State,
 
 #[cfg(test)]
 mod tests {
-    use test_helpers::*;
+    use crate::test_helpers::*;
     use super::*;
-    use common::Command::*;
+    use crate::common::Command::*;
     use super::Statement::*;
 
     #[test]

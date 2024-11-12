@@ -92,7 +92,7 @@ fn parse_instructions(mut input: &[u8]) -> Parser<Box<Program>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use common::Command::*;
+    use crate::common::Command::*;
     use super::Statement::*;
 
     #[test]
