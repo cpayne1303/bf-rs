@@ -1,4 +1,5 @@
 [package]
+edition = "2015"
 name = "bf"
 version = "0.4.9-alpha.0"
 authors = ["Jesse A. Tov <jesse.tov@gmail.com>"]
@@ -27,7 +28,7 @@ u32count = []
 u16count = []
 
 [dependencies]
-clap = "2.24"
+clap = { version = "4.5.20", features = ["derive"] }
 
 dynasmrt = { version = "0.2.1", optional = true }
 dynasm = { version = "0.2.1", optional = true }
