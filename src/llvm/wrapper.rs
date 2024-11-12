@@ -12,7 +12,7 @@ use llvm_sys::transforms::pass_manager_builder as builder;
 use llvm_sys::execution_engine as engine;
 pub use llvm_sys::LLVMIntPredicate;
 
-use rts::RtsState;
+use crate::rts::RtsState;
 
 pub struct Context {
     context_ref: LLVMContextRef,
