@@ -1,14 +1,14 @@
 #![feature(test)]
 
-extern crate test;
 extern crate bf;
+extern crate test;
 
 #[cfg(feature = "jit")]
 mod jit_only {
     use bf::ast;
 
-    use bf::traits::{Interpretable, JitCompilable};
     use bf::test_helpers;
+    use bf::traits::{Interpretable, JitCompilable};
 
     use test::Bencher;
 
@@ -16,18 +16,14 @@ mod jit_only {
     fn compile_factor(b: &mut Bencher) {
         let program = ast::parse_program(test_helpers::FACTOR_SRC).unwrap();
 
-        b.iter(|| {
-            program.jit_compile(true)
-        });
+        b.iter(|| program.jit_compile(true));
     }
 
     #[bench]
     fn compile_factor_unchecked(b: &mut Bencher) {
         let program = ast::parse_program(test_helpers::FACTOR_SRC).unwrap();
 
-        b.iter(|| {
-            program.jit_compile(false)
-        });
+        b.iter(|| program.jit_compile(false));
     }
 
     #[bench]
@@ -35,9 +31,7 @@ mod jit_only {
         let program = ast::parse_program(test_helpers::FACTOR_SRC).unwrap();
         let program = program.jit_compile(true);
 
-        b.iter(|| {
-            program.interpret_memory(None, b"1000000\n").unwrap()
-        });
+        b.iter(|| program.interpret_memory(None, b"1000000\n").unwrap());
     }
 
     #[bench]
@@ -45,8 +39,6 @@ mod jit_only {
         let program = ast::parse_program(test_helpers::FACTOR_SRC).unwrap();
         let program = program.jit_compile(false);
 
-        b.iter(|| {
-            program.interpret_memory(None, b"1000000\n").unwrap()
-        });
+        b.iter(|| program.interpret_memory(None, b"1000000\n").unwrap());
     }
 }

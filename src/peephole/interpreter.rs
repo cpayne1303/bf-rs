@@ -1,22 +1,30 @@
 use std::io::{Read, Write};
 
-use crate::state::State;
-use common::BfResult;
-use crate::traits::Interpretable;
 use super::*;
+use crate::state::State;
+use crate::traits::Interpretable;
+use common::BfResult;
 
 impl Interpretable for Program {
     fn interpret_state<R: Read, W: Write>(
-        &self, mut state: State, mut input: R, mut output: W) -> BfResult<()>
-    {
+        &self,
+        mut state: State,
+        mut input: R,
+        mut output: W,
+    ) -> BfResult<()> {
         interpret(self, &mut state, &mut input, &mut output)
     }
 }
 
-fn interpret<R, W>(instructions: &[Statement], state: &mut State,
-                   input: &mut R, output: &mut W)
-                   -> BfResult<()>
-    where R: Read, W: Write
+fn interpret<R, W>(
+    instructions: &[Statement],
+    state: &mut State,
+    input: &mut R,
+    output: &mut W,
+) -> BfResult<()>
+where
+    R: Read,
+    W: Write,
 {
     for instruction in instructions {
         interpret_instruction(instruction, state, input, output)?;
@@ -25,18 +33,23 @@ fn interpret<R, W>(instructions: &[Statement], state: &mut State,
     Ok(())
 }
 
-fn interpret_instruction<R, W>(instructions: &Statement, state: &mut State,
-                               input: &mut R, output: &mut W)
-                               -> BfResult<()>
-    where R: Read, W: Write
+fn interpret_instruction<R, W>(
+    instructions: &Statement,
+    state: &mut State,
+    input: &mut R,
+    output: &mut W,
+) -> BfResult<()>
+where
+    R: Read,
+    W: Write,
 {
     use super::Statement::*;
     use common::Instruction::*;
 
     match *instructions {
-        Instr(Left(count)) => state.left(count as usize)?,
+        Instr(Left(count)) => state.left(count)?,
 
-        Instr(Right(count)) => state.right(count as usize)?,
+        Instr(Right(count)) => state.right(count)?,
 
         Instr(Add(amount)) => state.up(amount),
 
@@ -50,7 +63,7 @@ fn interpret_instruction<R, W>(instructions: &Statement, state: &mut State,
             let value = state.load();
             if value != 0 {
                 state.store(0);
-                state.up_pos_offset(offset as usize, value)?;
+                state.up_pos_offset(offset, value)?;
             }
         }
 
@@ -58,24 +71,23 @@ fn interpret_instruction<R, W>(instructions: &Statement, state: &mut State,
             let value = state.load();
             if value != 0 {
                 state.store(0);
-                state.up_neg_offset(offset as usize, value)?;
+                state.up_neg_offset(offset, value)?;
             }
         }
 
         Instr(FindZeroRight(skip)) => {
             while state.load() != 0 {
-                state.right(skip as usize)?;
+                state.right(skip)?;
             }
         }
 
         Instr(FindZeroLeft(skip)) => {
             while state.load() != 0 {
-                state.left(skip as usize)?;
+                state.left(skip)?;
             }
         }
 
-        Instr(JumpZero(_)) | Instr(JumpNotZero(_)) =>
-            panic!("unexpected jump instruction"),
+        Instr(JumpZero(_)) | Instr(JumpNotZero(_)) => panic!("unexpected jump instruction"),
 
         Loop(ref body) => {
             while state.load() != 0 {

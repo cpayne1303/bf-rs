@@ -133,4 +133,3 @@ pub enum Instruction {
     /// `FindZeroLeft(3)` is equivalent to the concrete Brainfuck loop `[<<<]`.
     FindZeroLeft(Count),
 }
-

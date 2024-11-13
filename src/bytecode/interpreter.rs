@@ -1,22 +1,30 @@
 use std::io::{Read, Write};
 
-use crate::state::State;
-use common::BfResult;
-use crate::traits::Interpretable;
 use super::*;
+use crate::state::State;
+use crate::traits::Interpretable;
+use common::BfResult;
 
 impl Interpretable for Program {
     fn interpret_state<R: Read, W: Write>(
-        &self, mut state: State, mut input: R, mut output: W) -> BfResult<()>
-    {
+        &self,
+        mut state: State,
+        mut input: R,
+        mut output: W,
+    ) -> BfResult<()> {
         interpret(self, &mut state, &mut input, &mut output)
     }
 }
 
-fn interpret<R, W>(instructions: &Program, state: &mut State,
-                   input: &mut R, output: &mut W)
-                       -> BfResult<()>
-    where R: Read, W: Write
+fn interpret<R, W>(
+    instructions: &Program,
+    state: &mut State,
+    input: &mut R,
+    output: &mut W,
+) -> BfResult<()>
+where
+    R: Read,
+    W: Write,
 {
     use common::Instruction::*;
 
@@ -32,13 +40,13 @@ fn interpret<R, W>(instructions: &Program, state: &mut State,
 
             JumpZero(address) => {
                 if state.load() == 0 {
-                    pc = address as usize;
+                    pc = address;
                 }
             }
 
             JumpNotZero(address) => {
                 if state.load() != 0 {
-                    pc = address as usize;
+                    pc = address;
                 }
             }
 

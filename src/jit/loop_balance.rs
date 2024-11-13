@@ -4,8 +4,8 @@
 //! amount, an unknown amount in a given direction, or unknown altogether. This is used by the
 //! bound checking analysis when it encounters loops.
 
+use crate::peephole::{Program, Statement};
 use std::collections::HashMap;
-use crate::peephole::{Statement, Program};
 
 /// The body of a loop is a boxed slice of `Statement`s.
 pub type LoopBody = Box<[Statement]>;
@@ -44,9 +44,9 @@ impl LoopBalance {
         use self::LoopBalance::*;
 
         match self {
-            Exact(disp)         => disp >= 0,
-            RightOnly           => true,
-            LeftOnly | Unknown  => false,
+            Exact(disp) => disp >= 0,
+            RightOnly => true,
+            LeftOnly | Unknown => false,
         }
     }
 
@@ -55,8 +55,8 @@ impl LoopBalance {
         use self::LoopBalance::*;
 
         match self {
-            Exact(disp)         => disp <= 0,
-            LeftOnly            => true,
+            Exact(disp) => disp <= 0,
+            LeftOnly => true,
             RightOnly | Unknown => false,
         }
     }
@@ -88,53 +88,73 @@ impl LoopBalanceMap {
 
     /// Gets the balance of the given loop body.
     pub fn get(&self, body: &LoopBody) -> LoopBalance {
-        *self.0.get(&LoopIndex::from_loop_body(body)).unwrap_or(&LoopBalance::Unknown)
+        *self
+            .0
+            .get(&LoopIndex::from_loop_body(body))
+            .unwrap_or(&LoopBalance::Unknown)
     }
 
     /// Performs the analysis for the given loop body and any sub-loops.
     ///
     /// Stores the result of the analysis in `self`.
     fn analyze_loop(&mut self, body: &LoopBody) -> LoopBalance {
-        use crate::peephole::Statement::*;
-        use crate::common::Instruction::*;
         use self::LoopBalance::*;
+        use crate::common::Instruction::*;
+        use crate::peephole::Statement::*;
 
         let mut net = Exact(0);
 
         for statement in &**body {
             match *statement {
-                Instr(Right(count)) => net = match net {
-                    Exact(disp) => Exact(disp + count as isize),
-                    RightOnly   => RightOnly,
-                    _           => Unknown,
-                },
+                Instr(Right(count)) => {
+                    net = match net {
+                        Exact(disp) => Exact(disp + count as isize),
+                        RightOnly => RightOnly,
+                        _ => Unknown,
+                    }
+                }
 
-                Instr(Left(count)) => net = match net {
-                    Exact(disp) => Exact(disp - count as isize),
-                    LeftOnly    => LeftOnly,
-                    _           => Unknown,
-                },
+                Instr(Left(count)) => {
+                    net = match net {
+                        Exact(disp) => Exact(disp - count as isize),
+                        LeftOnly => LeftOnly,
+                        _ => Unknown,
+                    }
+                }
 
-                Instr(Add(_)) | Instr(In) | Instr(Out) |
-                Instr(SetZero) | Instr(OffsetAddRight(_)) | Instr(OffsetAddLeft(_)) => (),
+                Instr(Add(_))
+                | Instr(In)
+                | Instr(Out)
+                | Instr(SetZero)
+                | Instr(OffsetAddRight(_))
+                | Instr(OffsetAddLeft(_)) => (),
 
-                Instr(JumpZero(_)) | Instr(JumpNotZero(_)) =>
-                    panic!("unexpected jump instruction"),
+                Instr(JumpZero(_)) | Instr(JumpNotZero(_)) => panic!("unexpected jump instruction"),
 
-                Instr(FindZeroRight(_)) =>
-                    net = if net.is_right_only() { RightOnly } else { Unknown },
+                Instr(FindZeroRight(_)) => {
+                    net = if net.is_right_only() {
+                        RightOnly
+                    } else {
+                        Unknown
+                    }
+                }
 
-                Instr(FindZeroLeft(_)) =>
-                    net = if net.is_left_only() { LeftOnly } else { Unknown },
+                Instr(FindZeroLeft(_)) => {
+                    net = if net.is_left_only() {
+                        LeftOnly
+                    } else {
+                        Unknown
+                    }
+                }
 
                 Loop(ref body) => {
                     let body = self.analyze_loop(body);
 
                     net = match net {
-                        Exact(disp) if body.is_balanced()                   => Exact(disp),
-                        _ if net.is_right_only() && body.is_right_only()    => RightOnly,
-                        _ if net.is_left_only() && body.is_left_only()      => LeftOnly,
-                        _                                                   => Unknown,
+                        Exact(disp) if body.is_balanced() => Exact(disp),
+                        _ if net.is_right_only() && body.is_right_only() => RightOnly,
+                        _ if net.is_left_only() && body.is_left_only() => LeftOnly,
+                        _ => Unknown,
                     }
                 }
             }

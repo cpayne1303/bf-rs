@@ -1,9 +1,9 @@
 use std::io;
 
-use crate::common::{BfResult, Error, Count};
+use crate::common::{BfResult, Count, Error};
+use crate::peephole;
 use crate::rts::{self, RtsState};
 use crate::state::DEFAULT_CAPACITY;
-use crate::peephole;
 
 use super::wrapper::*;
 
@@ -11,7 +11,8 @@ use super::wrapper::*;
 pub trait LlvmCompilable {
     /// Compile the given program into the peephole AST to prepare for LLVM compilation.
     fn with_peephole<F, R>(&self, k: F) -> R
-        where F: FnOnce(&peephole::Program) -> R;
+    where
+        F: FnOnce(&peephole::Program) -> R;
 
     /// JIT compile and run the given program via LLVM.
     fn llvm_run(&self, memory_size: Option<usize>) -> BfResult<()> {
@@ -25,34 +26,38 @@ pub trait LlvmCompilable {
 /// State required for the LLVM compiler.
 struct Compiler<'a> {
     /// The LLVM context
-    context:        &'a Context,
+    context: &'a Context,
     /// The main module
-    module:         Module<'a>,
+    module: Module<'a>,
     /// A builder positioned at the current end of the program
-    builder:        Builder<'a>,
+    builder: Builder<'a>,
     /// Label to jump to for pointer underflow
-    underflow:      BasicBlock<'a>,
+    underflow: BasicBlock<'a>,
     /// Label to jump to for pointer overflow
-    overflow:       BasicBlock<'a>,
+    overflow: BasicBlock<'a>,
     /// The size of memory, for bounds checks
-    memory_size:    Value<'a>,
+    memory_size: Value<'a>,
     /// The main function
-    main_function:  Value<'a>,
+    main_function: Value<'a>,
     /// &RtsState<'a>
-    rts_state:      Value<'a>,
+    rts_state: Value<'a>,
     /// RtsState::read_c
-    read_function:  Value<'a>,
+    read_function: Value<'a>,
     /// RtsSate::write_c
     write_function: Value<'a>,
     /// The program’s memory (“tape”)
-    memory:         Value<'a>,
+    memory: Value<'a>,
     /// The current offset into memory
-    pointer:        Value<'a>,
+    pointer: Value<'a>,
 }
 
 /// JIT compile and run the given program via LLVM.
-pub fn compile_and_run<'a>(program: &peephole::Program, memory_size: Option<usize>, debug: bool,
-                           mut rts_state: RtsState<'a>) -> BfResult<()> {
+pub fn compile_and_run<'a>(
+    program: &peephole::Program,
+    memory_size: Option<usize>,
+    debug: bool,
+    mut rts_state: RtsState<'a>,
+) -> BfResult<()> {
     let context = Context::new();
 
     let compiler = Compiler::prologue(&context, memory_size.unwrap_or(DEFAULT_CAPACITY) as u64);
@@ -68,27 +73,33 @@ pub fn compile_and_run<'a>(program: &peephole::Program, memory_size: Option<usiz
 
     // This panics if LLVM fails.
     let result = unsafe {
-        compiler.module.with_function("bfi_main",
-                                      |f: extern fn(rts_state: &mut RtsState<'a>,
-                                                    read: extern fn(&mut RtsState<'a>) -> u8,
-                                                    write: extern fn(&mut RtsState<'a>, u8) -> ())
-                                                        -> u64| {
-                                          f(&mut rts_state, RtsState::read_c, RtsState::write_c)
-                                      }).unwrap()
+        compiler
+            .module
+            .with_function(
+                "bfi_main",
+                |f: extern "C" fn(
+                    rts_state: &mut RtsState<'a>,
+                    read: extern "C" fn(&mut RtsState<'a>) -> u8,
+                    write: extern "C" fn(&mut RtsState<'a>, u8) -> (),
+                ) -> u64| {
+                    f(&mut rts_state, RtsState::read_c, RtsState::write_c)
+                },
+            )
+            .unwrap()
     };
 
     match result {
-        rts::OKAY       => Ok(()),
-        rts::UNDERFLOW  => Err(Error::PointerUnderflow),
-        rts::OVERFLOW   => Err(Error::PointerOverflow),
+        rts::OKAY => Ok(()),
+        rts::UNDERFLOW => Err(Error::PointerUnderflow),
+        rts::OVERFLOW => Err(Error::PointerOverflow),
         _ => panic!("unrecognized error code"),
     }
 }
 
 impl<'a> Compiler<'a> {
     fn compile_block(&self, body: &[peephole::Statement]) {
-        use peephole::Statement::*;
         use crate::common::Instruction::*;
+        use peephole::Statement::*;
 
         let builder = self.builder;
 
@@ -171,12 +182,11 @@ impl<'a> Compiler<'a> {
                     builder.position_at_end(after);
                 }
 
-                Instr(JumpZero(_)) | Instr(JumpNotZero(_)) =>
-                    panic!("unexpected instruction"),
+                Instr(JumpZero(_)) | Instr(JumpNotZero(_)) => panic!("unexpected instruction"),
 
                 Loop(ref body) => {
                     let header = self.main_function.append("loop_header");
-                    let true_  = self.main_function.append("loop_body");
+                    let true_ = self.main_function.append("loop_body");
                     let false_ = self.main_function.append("after_loop");
 
                     builder.br(header);
@@ -199,12 +209,12 @@ impl<'a> Compiler<'a> {
         let module = Module::new(context, "bfi_module");
 
         // Some useful types
-        let i64_type        = Type::get_i64(context);
-        let i32_type        = Type::get_i32(context);
-        let i8_type         = Type::get_i8(context);
-        let bool_type       = Type::get_bool(context);
-        let void_type       = Type::get_void(context);
-        let char_ptr_type   = Type::get_pointer(i8_type);
+        let i64_type = Type::get_i64(context);
+        let i32_type = Type::get_i32(context);
+        let i8_type = Type::get_i8(context);
+        let bool_type = Type::get_bool(context);
+        let void_type = Type::get_void(context);
+        let char_ptr_type = Type::get_pointer(i8_type);
 
         // The size of memory as an LLVM Value
         let memory_size = Value::get_u64(context, memory_size);
@@ -214,42 +224,54 @@ impl<'a> Compiler<'a> {
         let read_function_type = Type::get_function(&[rts_state_type], i8_type);
 
         // Create the main function, create an entry basic block, and position a builder at entry.
-        let main_function_type = Type::get_function(&[
-            rts_state_type,
-            Type::get_pointer(read_function_type),
-            Type::get_pointer(write_function_type)], i64_type);
-        let main_function  = module.add_function("bfi_main", main_function_type);
+        let main_function_type = Type::get_function(
+            &[
+                rts_state_type,
+                Type::get_pointer(read_function_type),
+                Type::get_pointer(write_function_type),
+            ],
+            i64_type,
+        );
+        let main_function = module.add_function("bfi_main", main_function_type);
         let entry_bb = main_function.append("entry");
         let builder = Builder::new(context);
         builder.position_at_end(entry_bb);
 
         // All state for the compiler.
         let compiler = Compiler {
-            context:        context,
-            module:         module,
-            builder:        builder,
-            underflow:      main_function.append("underflow"),
-            overflow:       main_function.append("overflow"),
-            memory_size:    memory_size,
-            main_function:  main_function,
-            pointer:        builder.alloca(i64_type, "pointer"),
-            memory:         builder.array_alloca(i8_type, memory_size, "memory"),
-            rts_state:      main_function.get_fun_param(0),
-            read_function:  main_function.get_fun_param(1),
+            context: context,
+            module: module,
+            builder: builder,
+            underflow: main_function.append("underflow"),
+            overflow: main_function.append("overflow"),
+            memory_size: memory_size,
+            main_function: main_function,
+            pointer: builder.alloca(i64_type, "pointer"),
+            memory: builder.array_alloca(i8_type, memory_size, "memory"),
+            rts_state: main_function.get_fun_param(0),
+            read_function: main_function.get_fun_param(1),
             write_function: main_function.get_fun_param(2),
         };
 
         // Zero-initialize the memory
-        let memset_type = Type::get_function(&[char_ptr_type, i8_type, i64_type, i32_type, bool_type],
-                                             void_type);
-        let memset = compiler.module.add_function("llvm.memset.p0i8.i64", memset_type);
-        builder.call(memset,
-                     &[compiler.memory,
-                         Value::get_u8(context, 0),
-                         compiler.memory_size,
-                         Value::get_u32(context, 0),
-                         Value::get_bool(context, false)],
-                     "");
+        let memset_type = Type::get_function(
+            &[char_ptr_type, i8_type, i64_type, i32_type, bool_type],
+            void_type,
+        );
+        let memset = compiler
+            .module
+            .add_function("llvm.memset.p0i8.i64", memset_type);
+        builder.call(
+            memset,
+            &[
+                compiler.memory,
+                Value::get_u8(context, 0),
+                compiler.memory_size,
+                Value::get_u32(context, 0),
+                Value::get_bool(context, false),
+            ],
+            "",
+        );
 
         // Start the data pointer at 0.
         builder.store(Value::get_u64(context, 0), compiler.pointer);
@@ -262,17 +284,21 @@ impl<'a> Compiler<'a> {
         self.builder.ret(Value::get_u64(self.context, rts::OKAY));
 
         self.builder.position_at_end(self.underflow);
-        self.builder.ret(Value::get_u64(self.context, rts::UNDERFLOW));
+        self.builder
+            .ret(Value::get_u64(self.context, rts::UNDERFLOW));
 
         self.builder.position_at_end(self.overflow);
-        self.builder.ret(Value::get_u64(self.context, rts::OVERFLOW));
+        self.builder
+            .ret(Value::get_u64(self.context, rts::OVERFLOW));
     }
 
     /// Branch based on whether the byte at the data pointer is 0.
     fn if_not0(&self, true_: BasicBlock<'a>, false_: BasicBlock<'a>) {
         let byte = self.load_data("data");
         let zero = Value::get_u8(self.context, 0);
-        let comparison = self.builder.cmp(LLVMIntPredicate::LLVMIntNE, byte, zero, "comparison");
+        let comparison = self
+            .builder
+            .cmp(LLVMIntPredicate::LLVMIntNE, byte, zero, "comparison");
         self.builder.cond_br(comparison, true_, false_);
     }
 
@@ -306,7 +332,9 @@ impl<'a> Compiler<'a> {
         let old_pointer = self.builder.load(self.pointer, "old_pointer");
         let allowed = self.builder.sub(self.memory_size, old_pointer, "room");
         let offset = Value::get_u64(self.context, offset as u64);
-        let comparison = self.builder.cmp(LLVMIntPredicate::LLVMIntULT, offset, allowed, "allowed");
+        let comparison = self
+            .builder
+            .cmp(LLVMIntPredicate::LLVMIntULT, offset, allowed, "allowed");
         self.builder.cond_br(comparison, success, self.overflow);
         self.builder.position_at_end(success);
         self.builder.add(old_pointer, offset, name)
@@ -317,8 +345,9 @@ impl<'a> Compiler<'a> {
         let success = self.main_function.append("left_success");
         let old_pointer = self.builder.load(self.pointer, "old_pointer");
         let offset = Value::get_u64(self.context, offset as u64);
-        let comparison = self.builder.cmp(LLVMIntPredicate::LLVMIntULE, offset, old_pointer,
-                                     "allowed");
+        let comparison =
+            self.builder
+                .cmp(LLVMIntPredicate::LLVMIntULE, offset, old_pointer, "allowed");
         self.builder.cond_br(comparison, success, self.underflow);
         self.builder.position_at_end(success);
         self.builder.sub(old_pointer, offset, name)
@@ -327,7 +356,8 @@ impl<'a> Compiler<'a> {
 
 impl LlvmCompilable for peephole::Program {
     fn with_peephole<F, R>(&self, k: F) -> R
-        where F: FnOnce(&peephole::Program) -> R
+    where
+        F: FnOnce(&peephole::Program) -> R,
     {
         k(self)
     }
@@ -335,10 +365,9 @@ impl LlvmCompilable for peephole::Program {
 
 impl<T: peephole::PeepholeCompilable + ?Sized> LlvmCompilable for T {
     fn with_peephole<F, R>(&self, k: F) -> R
-        where F: FnOnce(&peephole::Program) -> R
+    where
+        F: FnOnce(&peephole::Program) -> R,
     {
         k(&self.peephole_compile())
     }
 }
-
-

@@ -29,4 +29,3 @@ pub enum Statement {
     /// A loop surrounding a sequence of instructions.
     Loop(Box<[Statement]>),
 }
-

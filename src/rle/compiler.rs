@@ -5,7 +5,8 @@ use crate::ast;
 pub trait RleCompilable {
     /// Convert the given program to unoptimized AST to prepare for run-length encoding.
     fn with_ast<F, R>(&self, k: F) -> R
-        where F: FnOnce(&ast::Program) -> R;
+    where
+        F: FnOnce(&ast::Program) -> R;
 
     /// Run-length encode the given program.
     fn rle_compile(&self) -> Box<Program> {
@@ -33,7 +34,7 @@ impl Compiler {
         Compiler {
             instructions: Vec::new(),
             last_command: Command::Right,
-            last_repeat:  0,
+            last_repeat: 0,
         }
     }
 
@@ -55,7 +56,8 @@ impl Compiler {
 
     fn push_op(&mut self) {
         if self.last_repeat > 0 {
-            self.instructions.push(Statement::Cmd(self.last_command, self.last_repeat));
+            self.instructions
+                .push(Statement::Cmd(self.last_command, self.last_repeat));
             self.last_command = Command::Right;
             self.last_repeat = 0;
         }
@@ -82,13 +84,21 @@ impl Compiler {
     }
 }
 
+impl RleCompilable for ast::Program {
+    fn with_ast<F, R>(&self, k: F) -> R
+    where
+        F: FnOnce(&ast::Program) -> R,
+    {
+        k(self)
+    }
+}
 
 #[cfg(test)]
 mod tests {
+    use super::Command::*;
+    use super::Statement as Obj;
     use super::*;
     use ast::Statement as Src;
-    use super::Statement as Obj;
-    use super::Command::*;
 
     #[test]
     fn right_compiles() {
@@ -97,21 +107,34 @@ mod tests {
 
     #[test]
     fn three_rights_compile() {
-        assert_compile(&[Src::Cmd(Right), Src::Cmd(Right), Src::Cmd(Right)],
-                       &[Obj::Cmd(Right, 3)]);
+        assert_compile(
+            &[Src::Cmd(Right), Src::Cmd(Right), Src::Cmd(Right)],
+            &[Obj::Cmd(Right, 3)],
+        );
     }
 
     #[test]
     fn two_rights_two_ups_compile() {
-        assert_compile(&[Src::Cmd(Right), Src::Cmd(Right), Src::Cmd(Up), Src::Cmd(Up)],
-                       &[Obj::Cmd(Right, 2), Obj::Cmd(Up, 2)]);
+        assert_compile(
+            &[Src::Cmd(Right), Src::Cmd(Right), Src::Cmd(Up), Src::Cmd(Up)],
+            &[Obj::Cmd(Right, 2), Obj::Cmd(Up, 2)],
+        );
     }
 
     #[test]
     fn loop_compiles() {
-        assert_compile(&[Src::Cmd(In), src_mk_loop(vec![Src::Cmd(Right)]), Src::Cmd(In)],
-                       &[Obj::Cmd(In, 1), mk_loop(vec![Obj::Cmd(Right, 1)]), Obj::Cmd(In, 1)]);
-
+        assert_compile(
+            &[
+                Src::Cmd(In),
+                src_mk_loop(vec![Src::Cmd(Right)]),
+                Src::Cmd(In),
+            ],
+            &[
+                Obj::Cmd(In, 1),
+                mk_loop(vec![Obj::Cmd(Right, 1)]),
+                Obj::Cmd(In, 1),
+            ],
+        );
     }
 
     fn assert_compile(src: &[ast::Statement], expected: &[Statement]) {
@@ -127,12 +150,3 @@ mod tests {
         Obj::Loop(body.into_boxed_slice())
     }
 }
-
-impl RleCompilable for ast::Program {
-    fn with_ast<F, R>(&self, k: F) -> R
-        where F: FnOnce(&ast::Program) -> R
-    {
-        k(self)
-    }
-}
-

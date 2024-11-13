@@ -12,28 +12,27 @@
 use std::io::{Read, Write};
 
 /// The object code terminated successfully.
-pub const OKAY: u64      = 0;
+pub const OKAY: u64 = 0;
 
 /// The pointer would have pointed below the allocated buffer had the program continued.
 pub const UNDERFLOW: u64 = 1;
 
 /// The pointer would have pointed above the allocated buffer had the program continued.
-pub const OVERFLOW: u64  = 2;
+pub const OVERFLOW: u64 = 2;
 
 /// Minimal state for our minimal run-time system.
 ///
 /// Trait objects providing channels for standard input and output.
 pub struct RtsState<'a> {
     /// Input channel for the `,` operation.
-    input:  &'a mut dyn Read,
+    input: &'a mut dyn Read,
     /// Output channel for the `.` operation.
     output: &'a mut dyn Write,
 }
 
 impl<'a> RtsState<'a> {
     pub fn new<R: Read, W: Write>(input: &'a mut R, output: &'a mut W) -> Self {
-        RtsState { input, output,
-        }
+        RtsState { input, output }
     }
 
     pub extern "win64" fn read(&mut self) -> u8 {
@@ -56,4 +55,3 @@ impl<'a> RtsState<'a> {
         let _ = self.output.write_all(&[byte]);
     }
 }
-

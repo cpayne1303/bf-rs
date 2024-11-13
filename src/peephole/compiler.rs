@@ -5,7 +5,8 @@ use crate::rle;
 pub trait PeepholeCompilable {
     /// Compile the given program into RLE AST to prepare for peephole optimization.
     fn with_rle<F, R>(&self, k: F) -> R
-        where F: FnOnce(&rle::Program) -> R;
+    where
+        F: FnOnce(&rle::Program) -> R;
 
     /// Peephole optimize the given program.
     fn peephole_compile(&self) -> Box<Program> {
@@ -39,16 +40,14 @@ impl Compiler {
     }
 
     pub fn compile(&mut self, src: &[rle::Statement]) {
-        use rle::Statement::*;
         use common::Command::*;
         use common::Instruction as Obj;
+        use rle::Statement::*;
 
         for instruction in src {
             match *instruction {
-                Cmd(Right, count) =>
-                    self.push(Obj::Right(count)),
-                Cmd(Left, count) =>
-                    self.push(Obj::Left(count)),
+                Cmd(Right, count) => self.push(Obj::Right(count)),
+                Cmd(Left, count) => self.push(Obj::Left(count)),
                 Cmd(Up, count) => {
                     let amount = (count % 256) as u8;
                     self.push(Obj::Add(amount));
@@ -58,20 +57,19 @@ impl Compiler {
                     self.push(Obj::Add(amount));
                 }
                 Cmd(In, count) => {
-                    for _ in 0 .. count {
+                    for _ in 0..count {
                         self.push(Obj::In);
                     }
                 }
                 Cmd(Out, count) => {
-                    for _ in 0 .. count {
+                    for _ in 0..count {
                         self.push(Obj::Out);
                     }
                 }
-                Cmd(Begin, _) | Cmd(End, _) =>
-                    panic!("bad opcode"),
+                Cmd(Begin, _) | Cmd(End, _) => panic!("bad opcode"),
 
                 Loop(ref body) => {
-                    let body = compile(&*body);
+                    let body = compile(body);
 
                     let peephole = or_else!(
                         set_zero_peephole(&body),
@@ -115,10 +113,8 @@ pub fn find_zero_peephole(body: &[Statement]) -> Option<common::Instruction> {
 
     if body.len() == 1 {
         match body[0] {
-            Instr(Right(count)) =>
-                Some(FindZeroRight(count)),
-            Instr(Left(count)) =>
-                Some(FindZeroLeft(count)),
+            Instr(Right(count)) => Some(FindZeroRight(count)),
+            Instr(Left(count)) => Some(FindZeroLeft(count)),
             _ => None,
         }
     } else {
@@ -133,12 +129,14 @@ pub fn offset_add_peephole(body: &[Statement]) -> Option<common::Instruction> {
     if body.len() == 4 {
         match (&body[0], &body[1], &body[2], &body[3]) {
             (&Instr(Add(255)), &Instr(Right(count_l)), &Instr(Add(1)), &Instr(Left(count_r)))
-            if count_l == count_r => {
+                if count_l == count_r =>
+            {
                 Some(OffsetAddRight(count_l))
             }
 
             (&Instr(Add(255)), &Instr(Left(count_l)), &Instr(Add(1)), &Instr(Right(count_r)))
-            if count_l == count_r => {
+                if count_l == count_r =>
+            {
                 Some(OffsetAddLeft(count_l))
             }
 
@@ -151,7 +149,8 @@ pub fn offset_add_peephole(body: &[Statement]) -> Option<common::Instruction> {
 
 impl PeepholeCompilable for rle::Program {
     fn with_rle<F, R>(&self, k: F) -> R
-        where F: FnOnce(&rle::Program) -> R
+    where
+        F: FnOnce(&rle::Program) -> R,
     {
         k(self)
     }
@@ -159,7 +158,8 @@ impl PeepholeCompilable for rle::Program {
 
 impl<T: rle::RleCompilable + ?Sized> PeepholeCompilable for T {
     fn with_rle<F, R>(&self, k: F) -> R
-        where F: FnOnce(&rle::Program) -> R
+    where
+        F: FnOnce(&rle::Program) -> R,
     {
         k(&self.rle_compile())
     }

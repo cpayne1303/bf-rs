@@ -1,6 +1,6 @@
 use super::loop_balance::LoopBalanceMap;
 use crate::common::Count;
-use crate::peephole::{Statement, Program};
+use crate::peephole::{Program, Statement};
 
 /// Interface for bounds checking analysis.
 ///
@@ -149,7 +149,9 @@ impl BoundsAnalysis for AbstractInterpreter {
 
     /// Updates the marks upon leaving a loop.
     fn leave_loop(&mut self) {
-        let (left_mark, right_mark) = self.loop_stack.pop()
+        let (left_mark, right_mark) = self
+            .loop_stack
+            .pop()
             .expect("got exit_loop without matching enter_loop");
         self.left_mark = left_mark;
         self.right_mark = right_mark;
@@ -162,13 +164,23 @@ impl BoundsAnalysis for AbstractInterpreter {
 pub struct NoAnalysis;
 
 impl BoundsAnalysis for NoAnalysis {
-    fn new(_program: &Program) -> Self { NoAnalysis }
-    fn move_left(&mut self, _count: Count) -> bool { false }
-    fn move_right(&mut self, _count: Count) -> bool { false }
-    fn check_left(&self, _count: Count) -> bool { false }
-    fn check_right(&self, _count: Count) -> bool { false }
-    fn reset_left(&mut self) { }
-    fn reset_right(&mut self) { }
-    fn enter_loop(&mut self, _body: &Box<[Statement]>) { }
-    fn leave_loop(&mut self) { }
+    fn new(_program: &Program) -> Self {
+        NoAnalysis
+    }
+    fn move_left(&mut self, _count: Count) -> bool {
+        false
+    }
+    fn move_right(&mut self, _count: Count) -> bool {
+        false
+    }
+    fn check_left(&self, _count: Count) -> bool {
+        false
+    }
+    fn check_right(&self, _count: Count) -> bool {
+        false
+    }
+    fn reset_left(&mut self) {}
+    fn reset_right(&mut self) {}
+    fn enter_loop(&mut self, _body: &Box<[Statement]>) {}
+    fn leave_loop(&mut self) {}
 }

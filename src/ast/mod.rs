@@ -8,8 +8,8 @@
 //! correspond directly to Brainfuck commands, except that loops are represented as subtrees
 //! rather than with begin and end markers.
 
-mod parser;
 mod interpreter;
+mod parser;
 
 pub use self::parser::parse_program;
 
@@ -31,4 +31,3 @@ pub enum Statement {
     /// A loop surrounding a sequence of instructions.
     Loop(Box<[Statement]>),
 }
-

@@ -7,7 +7,8 @@ use crate::common::{Count, Instruction};
 pub trait BytecodeCompilable {
     /// Compile the given program into the peephole AST to prepare for bytecode compilation.
     fn with_peephole<F, R>(&self, k: F) -> R
-        where F: FnOnce(&peephole::Program) -> R;
+    where
+        F: FnOnce(&peephole::Program) -> R;
 
     /// Compile the given program to bytecode.
     fn bytecode_compile(&self) -> Box<Program> {
@@ -34,8 +35,8 @@ impl Compiler {
     }
 
     pub fn compile(&mut self, src: &[peephole::Statement]) {
-        use peephole::Statement as Src;
         use common::Instruction as Obj;
+        use peephole::Statement as Src;
 
         for instruction in src {
             match *instruction {
@@ -70,7 +71,8 @@ pub fn usize_to_count(count: usize) -> Count {
 
 impl BytecodeCompilable for peephole::Program {
     fn with_peephole<F, R>(&self, k: F) -> R
-        where F: FnOnce(&peephole::Program) -> R
+    where
+        F: FnOnce(&peephole::Program) -> R,
     {
         k(self)
     }
@@ -78,7 +80,8 @@ impl BytecodeCompilable for peephole::Program {
 
 impl<T: peephole::PeepholeCompilable + ?Sized> BytecodeCompilable for T {
     fn with_peephole<F, R>(&self, k: F) -> R
-        where F: FnOnce(&peephole::Program) -> R
+    where
+        F: FnOnce(&peephole::Program) -> R,
     {
         k(&self.peephole_compile())
     }

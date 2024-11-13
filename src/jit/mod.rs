@@ -10,9 +10,9 @@
 //! unsafe mode, which means that programs that move the pointer outside the allocated
 //! memory will access and possibly overwrite arbitrary memory locations.
 
-mod loop_balance;
 mod analysis;
 mod compiler;
+mod loop_balance;
 
 pub use self::compiler::{compile, JitCompilable};
 use std::io::{Read, Write};
@@ -48,25 +48,26 @@ pub struct Program {
 /// `memory_size` – the amount of memory allocated, defaults to 30,000 bytes.
 ///
 /// `rts_state` – the state that the run-time system needs to do I/O.
-type EntryFunction<'a> = extern "win64" fn(memory: *mut u8,
-                                           memory_size: u64,
-                                           rts_state: *mut RtsState<'a>) -> u64;
+type EntryFunction<'a> =
+    extern "win64" fn(memory: *mut u8, memory_size: u64, rts_state: *mut RtsState<'a>) -> u64;
 
 impl Interpretable for Program {
-    fn interpret_state<R: Read, W: Write>(&self, mut state: State,
-                                          mut input: R, mut output: W)
-                                          -> BfResult<()>
-    {
+    fn interpret_state<R: Read, W: Write>(
+        &self,
+        mut state: State,
+        mut input: R,
+        mut output: W,
+    ) -> BfResult<()> {
         let mut rts = RtsState::new(&mut input, &mut output);
 
         let f: EntryFunction = unsafe { mem::transmute(self.code.ptr(self.start)) };
 
-        let result = f(state.as_mut_ptr(), state.capacity() as u64, &mut rts);;
+        let result = f(state.as_mut_ptr(), state.capacity() as u64, &mut rts);
 
         match result {
-            rts::OKAY      => Ok(()),
+            rts::OKAY => Ok(()),
             rts::UNDERFLOW => Err(Error::PointerUnderflow),
-            rts::OVERFLOW  => Err(Error::PointerOverflow),
+            rts::OVERFLOW => Err(Error::PointerOverflow),
             _ => panic!("{}", format!("Unknown result code: {}", result)),
         }
     }
@@ -74,8 +75,8 @@ impl Interpretable for Program {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_helpers::*;
     use crate::common::{BfResult, Error};
+    use crate::test_helpers::*;
 
     #[test]
     fn move_right_once() {
@@ -123,4 +124,3 @@ mod tests {
         assert_interpret_result(&program, input.as_bytes(), output.map(|s| s.as_bytes()));
     }
 }
-

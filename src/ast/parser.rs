@@ -45,19 +45,18 @@ fn parse_instruction<'a>(mut input: &'a [u8]) -> Parser<Option<Statement>> {
                         input = next_input;
                         loop {
                             match input.split_first() {
-                                Some((&b']', next_input)) =>
-                                    return Ok((Some(Statement::Loop(program)), next_input)),
-                                Some((_, next_input)) =>
-                                    input = next_input,
-                                None =>
-                                    return Err(Error::UnmatchedBegin),
+                                Some((&b']', next_input)) => {
+                                    return Ok((Some(Statement::Loop(program)), next_input))
+                                }
+                                Some((_, next_input)) => input = next_input,
+                                None => return Err(Error::UnmatchedBegin),
                             }
                         }
                     }
                 },
-                _   => {
+                _ => {
                     // pass
-                },
+                }
             }
         } else {
             return Ok((None, input));
@@ -91,9 +90,9 @@ fn parse_instructions(mut input: &[u8]) -> Parser<Box<Program>> {
 
 #[cfg(test)]
 mod tests {
+    use super::Statement::*;
     use super::*;
     use crate::common::Command::*;
-    use super::Statement::*;
 
     #[test]
     fn single_byte_instructions_parse() {
@@ -107,9 +106,20 @@ mod tests {
 
     #[test]
     fn multiple_instructions_parse() {
-        assert_parse("<><>+-+-.",
-                     &[Cmd(Left), Cmd(Right), Cmd(Left), Cmd(Right),
-                       Cmd(Up), Cmd(Down), Cmd(Up), Cmd(Down), Cmd(Out)]);
+        assert_parse(
+            "<><>+-+-.",
+            &[
+                Cmd(Left),
+                Cmd(Right),
+                Cmd(Left),
+                Cmd(Right),
+                Cmd(Up),
+                Cmd(Down),
+                Cmd(Up),
+                Cmd(Down),
+                Cmd(Out),
+            ],
+        );
     }
 
     #[test]
@@ -130,17 +140,20 @@ mod tests {
 
     #[test]
     fn nested_loops_parse() {
-        assert_parse("[<[]]",
-                     &[mk_loop(vec![Cmd(Left), mk_loop(vec![])])]);
-        assert_parse("[<[+],]",
-                     &[mk_loop(vec![Cmd(Left), mk_loop(vec![Cmd(Up)]), Cmd(In)])]);
+        assert_parse("[<[]]", &[mk_loop(vec![Cmd(Left), mk_loop(vec![])])]);
+        assert_parse(
+            "[<[+],]",
+            &[mk_loop(vec![Cmd(Left), mk_loop(vec![Cmd(Up)]), Cmd(In)])],
+        );
     }
 
     #[test]
     fn comment_is_ignored() {
         assert_parse("hello <", &[Cmd(Left)]);
-        assert_parse("h[e<l[l+o] ,world]",
-                     &[mk_loop(vec![Cmd(Left), mk_loop(vec![Cmd(Up)]), Cmd(In)])]);
+        assert_parse(
+            "h[e<l[l+o] ,world]",
+            &[mk_loop(vec![Cmd(Left), mk_loop(vec![Cmd(Up)]), Cmd(In)])],
+        );
     }
 
     #[test]
@@ -166,7 +179,10 @@ mod tests {
     }
 
     fn assert_parse(input: &str, program: &[Statement]) {
-        assert_eq!(parse_program(input.as_bytes()), Ok(program.to_vec().into_boxed_slice()));
+        assert_eq!(
+            parse_program(input.as_bytes()),
+            Ok(program.to_vec().into_boxed_slice())
+        );
     }
 
     fn assert_parse_error(input: &str, message: Error) {
@@ -177,4 +193,3 @@ mod tests {
         Statement::Loop(instructions.into_boxed_slice())
     }
 }
-

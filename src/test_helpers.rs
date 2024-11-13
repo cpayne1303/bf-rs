@@ -9,8 +9,7 @@ use crate::traits::Interpretable;
 pub const FACTOR_SRC: &[u8] = include_bytes!("../bf/factor.bf");
 
 /// Source of a “hello world” program.
-pub const HELLO_WORLD_SRC: &[u8] =
-    b"++++++[>++++++++++++<-]>.\
+pub const HELLO_WORLD_SRC: &[u8] = b"++++++[>++++++++++++<-]>.\
       >++++++++++[>++++++++++<-]>+.\
       +++++++..+++.>++++[>+++++++++++<-]>.\
       <+++[>----<-]>.<<<<<+++[>+++++<-]>.\
@@ -23,12 +22,12 @@ pub fn assert_interpret<I: Interpretable + ?Sized>(program: &I, input: &[u8], ou
 
 /// Interprets `program`, giving it input `input`, and asserting that its result is `output`.
 pub fn assert_interpret_result<I>(program: &I, input: &[u8], output: BfResult<&[u8]>)
-    where I: Interpretable + ?Sized
+where
+    I: Interpretable + ?Sized,
 {
     let actual_bytes = program.interpret_memory(None, input);
     let actual = actual_bytes.map(|bytes| str::from_utf8(&bytes).unwrap().to_owned());
     let expected = output.map(|bytes| str::from_utf8(bytes).unwrap().to_owned());
 
     assert_eq!(actual, expected);
-
 }

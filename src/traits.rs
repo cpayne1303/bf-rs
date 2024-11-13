@@ -1,31 +1,33 @@
 //! Contains the Interpretable trait, which provides a common interface for running a Brainfuck
 //! program.
 
-use std::io::{Cursor, Read, Write, stdin, stdout};
+use std::io::{stdin, stdout, Cursor, Read, Write};
 
 use crate::common::BfResult;
 use crate::state::State;
 
-pub use crate::rle::RleCompilable;
-pub use crate::peephole::PeepholeCompilable;
 pub use crate::bytecode::BytecodeCompilable;
 #[cfg(feature = "jit")]
 pub use crate::jit::JitCompilable;
 #[cfg(feature = "llvm")]
 pub use crate::llvm::LlvmCompilable;
+pub use crate::peephole::PeepholeCompilable;
+pub use crate::rle::RleCompilable;
 
 /// Program forms that can be interpreted.
 pub trait Interpretable {
     /// Interprets a program against the given state.
-    fn interpret_state<R: Read, W: Write>(&self, state: State,
-                                          input: R, output: W)
+    fn interpret_state<R: Read, W: Write>(&self, state: State, input: R, output: W)
         -> BfResult<()>;
 
     /// Interprets a program. If the given `size` is `None`, the default memory size.
     fn interpret<R: Read, W: Write>(
-        &self, size: Option<usize>, input: R, output: W) -> BfResult<()>
-    {
-        let state = size.map(State::with_capacity).unwrap_or_else(State::new);
+        &self,
+        size: Option<usize>,
+        input: R,
+        output: W,
+    ) -> BfResult<()> {
+        let state = size.map(State::with_capacity).unwrap_or_default();
         self.interpret_state(state, input, output)
     }
 
@@ -50,21 +52,31 @@ pub trait IntoUsize {
 }
 
 impl IntoUsize for usize {
-    fn into_usize(self) -> usize { self }
+    fn into_usize(self) -> usize {
+        self
+    }
 }
 
 impl IntoUsize for u64 {
-    fn into_usize(self) -> usize { self as usize }
+    fn into_usize(self) -> usize {
+        self as usize
+    }
 }
 
 impl IntoUsize for u32 {
-    fn into_usize(self) -> usize { self as usize }
+    fn into_usize(self) -> usize {
+        self as usize
+    }
 }
 
 impl IntoUsize for u16 {
-    fn into_usize(self) -> usize { self as usize }
+    fn into_usize(self) -> usize {
+        self as usize
+    }
 }
 
 impl IntoUsize for u8 {
-    fn into_usize(self) -> usize { self as usize }
+    fn into_usize(self) -> usize {
+        self as usize
+    }
 }

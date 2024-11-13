@@ -1,22 +1,30 @@
 use std::io::{Read, Write};
 
-use crate::state::State;
-use crate::common::BfResult;
-use crate::traits::Interpretable;
 use super::*;
+use crate::common::BfResult;
+use crate::state::State;
+use crate::traits::Interpretable;
 
 impl Interpretable for Program {
     fn interpret_state<R: Read, W: Write>(
-        &self, mut state: State, mut input: R, mut output: W) -> BfResult<()>
-    {
+        &self,
+        mut state: State,
+        mut input: R,
+        mut output: W,
+    ) -> BfResult<()> {
         interpret(self, &mut state, &mut input, &mut output)
     }
 }
 
-fn interpret<R, W>(instructions: &Program, state: &mut State,
-                   input: &mut R, output: &mut W)
-                   -> BfResult<()>
-    where R: Read, W: Write
+fn interpret<R, W>(
+    instructions: &Program,
+    state: &mut State,
+    input: &mut R,
+    output: &mut W,
+) -> BfResult<()>
+where
+    R: Read,
+    W: Write,
 {
     for instruction in instructions {
         interpret_instruction(instruction, state, input, output)?;
@@ -26,13 +34,18 @@ fn interpret<R, W>(instructions: &Program, state: &mut State,
 }
 
 #[inline]
-fn interpret_instruction<R, W>(instruction: &Statement, state: &mut State,
-                               input: &mut R, output: &mut W)
-                               -> BfResult<()>
-    where R: Read, W: Write
+fn interpret_instruction<R, W>(
+    instruction: &Statement,
+    state: &mut State,
+    input: &mut R,
+    output: &mut W,
+) -> BfResult<()>
+where
+    R: Read,
+    W: Write,
 {
-    use super::Statement::*;
     use super::Command::*;
+    use super::Statement::*;
 
     match *instruction {
         Cmd(Left) => state.left(1usize)?,
@@ -41,10 +54,9 @@ fn interpret_instruction<R, W>(instruction: &Statement, state: &mut State,
         Cmd(Down) => state.down(1),
         Cmd(In) => state.read(input),
         Cmd(Out) => state.write(output),
-        Cmd(Begin) | Cmd(End) =>
-            panic!("Invalid instruction: Begin or End"),
+        Cmd(Begin) | Cmd(End) => panic!("Invalid instruction: Begin or End"),
         Loop(ref program) => {
-            while state.load() != 0  {
+            while state.load() != 0 {
                 interpret(program, state, input, output)?;
             }
         }
@@ -55,10 +67,10 @@ fn interpret_instruction<R, W>(instruction: &Statement, state: &mut State,
 
 #[cfg(test)]
 mod tests {
-    use crate::test_helpers::*;
+    use super::Statement::*;
     use super::*;
     use crate::common::Command::*;
-    use super::Statement::*;
+    use crate::test_helpers::*;
 
     #[test]
     fn assert_no_output() {

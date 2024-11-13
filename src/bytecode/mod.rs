@@ -24,4 +24,3 @@ pub use self::compiler::{compile, BytecodeCompilable};
 
 /// A program is a bytecode sequence of instructions.
 pub type Program = [common::Instruction];
-
