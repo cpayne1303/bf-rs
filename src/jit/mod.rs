@@ -15,16 +15,15 @@ mod analysis;
 mod compiler;
 
 pub use self::compiler::{compile, JitCompilable};
-
 use std::io::{Read, Write};
 use std::mem;
 
 use dynasmrt;
 
-use common::{BfResult, Error};
-use rts::{self, RtsState};
-use state::State;
-use traits::Interpretable;
+use crate::common::{BfResult, Error};
+use crate::rts::{self, RtsState};
+use crate::state::State;
+use crate::traits::Interpretable;
 
 /// The representation of a JIT-compiled program.
 ///
@@ -68,15 +67,15 @@ impl Interpretable for Program {
             rts::OKAY      => Ok(()),
             rts::UNDERFLOW => Err(Error::PointerUnderflow),
             rts::OVERFLOW  => Err(Error::PointerOverflow),
-            _ => panic!(format!("Unknown result code: {}", result)),
+            _ => panic!("{}", format!("Unknown result code: {}", result)),
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use test_helpers::*;
-    use common::{BfResult, Error};
+    use crate::test_helpers::*;
+    use crate::common::{BfResult, Error};
 
     #[test]
     fn move_right_once() {
@@ -117,10 +116,10 @@ mod tests {
     }
 
     fn assert_parse_interpret(program: &[u8], input: &str, output: BfResult<&str>) {
-        let program = ::ast::parse_program(program).unwrap();
-        let program = ::rle::compile(&program);
-        let program = ::peephole::compile(&program);
-        let program = ::jit::compile(&program, true);
+        let program = crate::ast::parse_program(program).unwrap();
+        let program = crate::rle::compile(&program);
+        let program = crate::peephole::compile(&program);
+        let program = crate::jit::compile(&program, true);
         assert_interpret_result(&program, input.as_bytes(), output.map(|s| s.as_bytes()));
     }
 }

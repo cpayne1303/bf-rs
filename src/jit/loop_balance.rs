@@ -5,7 +5,7 @@
 //! bound checking analysis when it encounters loops.
 
 use std::collections::HashMap;
-use peephole::{Statement, Program};
+use crate::peephole::{Statement, Program};
 
 /// The body of a loop is a boxed slice of `Statement`s.
 pub type LoopBody = Box<[Statement]>;
@@ -95,8 +95,8 @@ impl LoopBalanceMap {
     ///
     /// Stores the result of the analysis in `self`.
     fn analyze_loop(&mut self, body: &LoopBody) -> LoopBalance {
-        use peephole::Statement::*;
-        use common::Instruction::*;
+        use crate::peephole::Statement::*;
+        use crate::common::Instruction::*;
         use self::LoopBalance::*;
 
         let mut net = Exact(0);

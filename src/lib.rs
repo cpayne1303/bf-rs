@@ -42,10 +42,7 @@
 //! all representations of Brainfuck programs implement the
 //! [`Interpretable`](traits/trait.Interpretable.html) trait.
 
-#![cfg_attr(feature = "jit", feature(plugin))]
-#![cfg_attr(feature = "jit", plugin(dynasm))]
 
-#[cfg(feature = "jit")]
 extern crate dynasmrt;
 
 #[cfg(feature = "llvm")]

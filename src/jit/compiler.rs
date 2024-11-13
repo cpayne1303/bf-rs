@@ -1,10 +1,11 @@
+use dynasm::dynasm;
 use dynasmrt::x64::Assembler;
 use dynasmrt::{DynasmApi, DynasmLabelApi};
 
 use super::*;
 use super::analysis::{BoundsAnalysis, AbstractInterpreter, NoAnalysis};
-use common::Count;
-use peephole;
+use crate::common::Count;
+use crate::peephole;
 use rts;
 
 /// Program forms that can be JIT compiled.
@@ -81,6 +82,10 @@ impl<B: BoundsAnalysis> Compiler<B> {
 
     fn emit_prologue(&mut self) {
         dynasm!(self.asm
+    ; .alias pointer, r12
+    ; .alias mem_start, r13
+    ; .alias mem_limit, r14
+    ; .alias rts, r15
             ; push r12
             ; push r13
             ; push r14
@@ -95,6 +100,10 @@ impl<B: BoundsAnalysis> Compiler<B> {
 
     fn emit_epilogue(&mut self) {
         dynasm!(self.asm
+    ; .alias pointer, r12
+    ; .alias mem_start, r13
+    ; .alias mem_limit, r14
+    ; .alias rts, r15
             ; mov rax, rts::OKAY as i32
             ; jmp ->finish
 
@@ -122,13 +131,17 @@ impl<B: BoundsAnalysis> Compiler<B> {
 
     fn compile_statement(&mut self, stm: &peephole::Statement) {
         use peephole::Statement::*;
-        use common::Instruction::*;
+        use crate::common::Instruction::*;
 
         match *stm {
             Instr(Right(count)) => {
                 let proved = self.interpreter.move_right(count);
 
                 dynasm!(self.asm
+    ; .alias pointer, r12
+    ; .alias mem_start, r13
+    ; .alias mem_limit, r14
+    ; .alias rts, r15
                     ;; self.load_pos_offset(count, proved)
                     ; add pointer, rax
                 );
@@ -138,6 +151,10 @@ impl<B: BoundsAnalysis> Compiler<B> {
                 let proved = self.interpreter.move_left(count);
 
                 dynasm!(self.asm
+    ; .alias pointer, r12
+    ; .alias mem_start, r13
+    ; .alias mem_limit, r14
+    ; .alias rts, r15
                     ;; self.load_neg_offset(count, proved)
                     ; sub pointer, rax
                 );
@@ -145,12 +162,20 @@ impl<B: BoundsAnalysis> Compiler<B> {
 
             Instr(Add(count)) => {
                 dynasm!(self.asm
+    ; .alias pointer, r12
+    ; .alias mem_start, r13
+    ; .alias mem_limit, r14
+    ; .alias rts, r15
                     ; add [pointer], BYTE count as i8
                 );
             }
 
             Instr(In) => {
                 dynasm!(self.asm
+    ; .alias pointer, r12
+    ; .alias mem_start, r13
+    ; .alias mem_limit, r14
+    ; .alias rts, r15
                     ;; self.rts_call(rts::RtsState::read as _)
                     ; mov [pointer], al
                 );
@@ -158,6 +183,10 @@ impl<B: BoundsAnalysis> Compiler<B> {
 
             Instr(Out) => {
                 dynasm!(self.asm
+    ; .alias pointer, r12
+    ; .alias mem_start, r13
+    ; .alias mem_limit, r14
+    ; .alias rts, r15
                     ; xor rdx, rdx
                     ; mov dl, [pointer]
                     ;; self.rts_call(rts::RtsState::write as _)
@@ -166,6 +195,10 @@ impl<B: BoundsAnalysis> Compiler<B> {
 
             Instr(SetZero) => {
                 dynasm!(self.asm
+    ; .alias pointer, r12
+    ; .alias mem_start, r13
+    ; .alias mem_limit, r14
+    ; .alias rts, r15
                     ; mov BYTE [pointer], 0
                 )
             }
@@ -174,6 +207,10 @@ impl<B: BoundsAnalysis> Compiler<B> {
                 self.interpreter.reset_right();
 
                 dynasm!(self.asm
+    ; .alias pointer, r12
+    ; .alias mem_start, r13
+    ; .alias mem_limit, r14
+    ; .alias rts, r15
                     ; jmp >end_loop
                     ; begin_loop:
                     ;; self.load_pos_offset(skip, false)
@@ -188,6 +225,10 @@ impl<B: BoundsAnalysis> Compiler<B> {
                 self.interpreter.reset_left();
 
                 dynasm!(self.asm
+    ; .alias pointer, r12
+    ; .alias mem_start, r13
+    ; .alias mem_limit, r14
+    ; .alias rts, r15
                     ; jmp >end_loop
                     ; begin_loop:
                     ;; self.load_neg_offset(skip, false)
@@ -202,6 +243,10 @@ impl<B: BoundsAnalysis> Compiler<B> {
                 let proved = self.interpreter.check_right(offset);
 
                 dynasm!(self.asm
+    ; .alias pointer, r12
+    ; .alias mem_start, r13
+    ; .alias mem_limit, r14
+    ; .alias rts, r15
                     ; cmp BYTE [pointer], 0
                     ; jz >skip
                     ;; self.load_pos_offset(offset, proved)
@@ -216,6 +261,10 @@ impl<B: BoundsAnalysis> Compiler<B> {
                 let proved = self.interpreter.check_left(offset);
 
                 dynasm!(self.asm
+    ; .alias pointer, r12
+    ; .alias mem_start, r13
+    ; .alias mem_limit, r14
+    ; .alias rts, r15
                     ; cmp BYTE [pointer], 0
                     ; jz >skip
                     ;; self.load_neg_offset(offset, proved)
@@ -237,6 +286,10 @@ impl<B: BoundsAnalysis> Compiler<B> {
                 self.interpreter.enter_loop(body);
 
                 dynasm!(self.asm
+    ; .alias pointer, r12
+    ; .alias mem_start, r13
+    ; .alias mem_limit, r14
+    ; .alias rts, r15
                     ; jmp =>end_label
                     ; =>begin_label
                     ;; self.compile(body)
@@ -252,6 +305,10 @@ impl<B: BoundsAnalysis> Compiler<B> {
 
     fn rts_call(&mut self, fun: i64) {
         dynasm!(self.asm
+    ; .alias pointer, r12
+    ; .alias mem_start, r13
+    ; .alias mem_limit, r14
+    ; .alias rts, r15
             ; mov rax, QWORD fun
             ; mov rcx, rts
             ; sub rsp, BYTE 0x28
@@ -264,10 +321,18 @@ impl<B: BoundsAnalysis> Compiler<B> {
     fn load_constant(&mut self, count: Count) {
         if count as i32 as Count == count {
             dynasm!(self.asm
+    ; .alias pointer, r12
+    ; .alias mem_start, r13
+    ; .alias mem_limit, r14
+    ; .alias rts, r15
                 ; mov rax, DWORD count as i32
             );
         } else {
             dynasm!(self.asm
+    ; .alias pointer, r12
+    ; .alias mem_start, r13
+    ; .alias mem_limit, r14
+    ; .alias rts, r15
                 ; mov rax, QWORD count as i64
             );
         }
@@ -279,6 +344,10 @@ impl<B: BoundsAnalysis> Compiler<B> {
 
         if self.checked && !proved {
             dynasm!(self.asm
+    ; .alias pointer, r12
+    ; .alias mem_start, r13
+    ; .alias mem_limit, r14
+    ; .alias rts, r15
                 ; mov rcx, mem_limit
                 ; sub rcx, pointer
                 ; cmp rcx, rax
@@ -293,6 +362,10 @@ impl<B: BoundsAnalysis> Compiler<B> {
 
         if self.checked && !proved {
             dynasm!(self.asm
+    ; .alias pointer, r12
+    ; .alias mem_start, r13
+    ; .alias mem_limit, r14
+    ; .alias rts, r15
                 ; mov rcx, pointer
                 ; sub rcx, mem_start
                 ; cmp rcx, rax

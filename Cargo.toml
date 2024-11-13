@@ -30,8 +30,8 @@ u16count = []
 [dependencies]
 clap = { version = "4.5.20", features = ["derive"] }
 
-dynasmrt = { version = "0.2.1", optional = true }
-dynasm = { version = "0.2.1", optional = true }
+dynasmrt = { version = "3.0.1", optional = true }
+dynasm = { version = "3.0.1", optional = true }
 
 llvm-sys = { version = "38", optional = true }
 

@@ -1,6 +1,6 @@
 use super::loop_balance::LoopBalanceMap;
-use common::Count;
-use peephole::{Statement, Program};
+use crate::common::Count;
+use crate::peephole::{Statement, Program};
 
 /// Interface for bounds checking analysis.
 ///

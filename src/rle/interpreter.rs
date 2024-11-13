@@ -64,7 +64,6 @@ fn interpret_instruction<R, W>(instruction: &Statement, state: &mut State,
 #[cfg(test)]
 mod tests {
     use crate::test_helpers::*;
-use crate::ast;
     #[test]
     fn hello_world() {
         assert_parse_interpret(HELLO_WORLD_SRC, "", "Hello, World!");
