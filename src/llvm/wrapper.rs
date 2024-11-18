@@ -36,14 +36,14 @@ impl Context {
 
     fn wrap_value(&self, value_ref: LLVMValueRef) -> Value {
         Value {
-            value_ref: value_ref,
+            value_ref,
             context: self,
         }
     }
 
     fn wrap_type(&self, type_ref: LLVMTypeRef) -> Type {
         Type {
-            type_ref: type_ref,
+            type_ref,
             context: self,
         }
     }
@@ -68,7 +68,7 @@ impl<'a> Module<'a> {
         let name = context.new_name(name);
         Module {
             module_ref: unsafe { LLVMModuleCreateWithNameInContext(name, context.context_ref) },
-            context: context,
+            context,
         }
     }
 
@@ -203,7 +203,7 @@ impl<'a> Type<'a> {
     }
 
     pub fn get_function(args: &[Type<'a>], result: Type<'a>) -> Self {
-        let mut args = args.into_iter().map(|arg| arg.type_ref).collect::<Vec<_>>();
+        let mut args = args.iter().map(|arg| arg.type_ref).collect::<Vec<_>>();
         result.context.wrap_type(unsafe {
             LLVMFunctionType(result.type_ref, args.as_mut_ptr(), args.len() as _, 0)
         })
@@ -228,7 +228,7 @@ impl<'a> Value<'a> {
             LLVMAppendBasicBlockInContext(self.context.context_ref, self.value_ref, name)
         };
         BasicBlock {
-            bb_ref: bb_ref,
+            bb_ref,
             _context: self.context,
         }
     }
@@ -274,7 +274,7 @@ impl<'a> Builder<'a> {
     pub fn new(context: &'a Context) -> Self {
         Builder {
             builder_ref: unsafe { LLVMCreateBuilderInContext(context.context_ref) },
-            context: context,
+            context,
         }
     }
 
@@ -312,7 +312,7 @@ impl<'a> Builder<'a> {
     pub fn call(&self, fun: Value<'a>, args: &[Value<'a>], name: &str) -> Value<'a> {
         let name = self.context.new_name(name);
         let mut args = args
-            .into_iter()
+            .iter()
             .map(|arg| arg.value_ref)
             .collect::<Vec<_>>();
         self.context.wrap_value(unsafe {
@@ -347,7 +347,7 @@ impl<'a> Builder<'a> {
 
     pub fn gep(&self, ptr: Value<'a>, indices: &[Value<'a>], name: &str) -> Value<'a> {
         let name = self.context.new_name(name);
-        let mut indices = indices.into_iter().map(|i| i.value_ref).collect::<Vec<_>>();
+        let mut indices = indices.iter().map(|i| i.value_ref).collect::<Vec<_>>();
         self.context.wrap_value(unsafe {
             LLVMBuildGEP(
                 self.builder_ref,

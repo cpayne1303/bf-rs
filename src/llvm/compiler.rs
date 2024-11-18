@@ -239,13 +239,13 @@ impl<'a> Compiler<'a> {
 
         // All state for the compiler.
         let compiler = Compiler {
-            context: context,
-            module: module,
-            builder: builder,
+            context,
+            module,
+            builder,
             underflow: main_function.append("underflow"),
             overflow: main_function.append("overflow"),
-            memory_size: memory_size,
-            main_function: main_function,
+            memory_size,
+            main_function,
             pointer: builder.alloca(i64_type, "pointer"),
             memory: builder.array_alloca(i8_type, memory_size, "memory"),
             rts_state: main_function.get_fun_param(0),
