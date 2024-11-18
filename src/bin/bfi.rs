@@ -28,7 +28,7 @@ extern crate bf;
 extern crate clap;
 use bf::ast;
 use bf::traits::*;
-use clap::{Parser, ValueEnum};
+use clap::Parser;
 use std::fs::File;
 use std::io::Read;
 use std::process::exit;
@@ -38,7 +38,6 @@ use std::process::exit;
 #[clap(author = "Jesse A. Tov <jesse.tov@gmail.com>")]
 #[clap(name = "bfi")]
 #[clap(about = "A brainfuck interpreter")]
-
 struct NewOptions {
     #[clap(
         help = "The source file(s) to interpret",
@@ -94,21 +93,15 @@ impl Options {
         }
     }
 }
-#[derive(Debug, Clone, Copy, ValueEnum)]
+#[derive(Debug, Clone, Copy)]
 enum Pass {
-    #[clap(name = "--ast")]
     Ast,
-    #[clap(name = "--rle")]
     Rle,
-    #[clap(name = "--byte")]
     Bytecode,
-    #[clap(name = "--peep")]
     Peephole,
     #[cfg(feature = "jit")]
-    #[clap(name = "--jit")]
     Jit,
     #[cfg(feature = "llvm")]
-    #[clap(name = "llvm")]
     Llvm,
 }
 impl Pass {
