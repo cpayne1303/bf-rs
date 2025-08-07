@@ -61,9 +61,9 @@ impl<B: BoundsAnalysis> Compiler<B> {
         let start = asm.offset();
 
         let mut result = Compiler {
-            asm,
-            start,
-            checked,
+            asm: asm,
+            start: start,
+            checked: checked,
             interpreter: B::new(program),
         };
 
