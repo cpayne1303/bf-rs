@@ -61,6 +61,9 @@ pub mod rle;
 #[cfg(feature = "jit")]
 pub mod jit;
 
+#[cfg(feature = "cranelift")]
+pub mod cranelift;
+
 #[cfg(feature = "llvm")]
 pub mod llvm;
 

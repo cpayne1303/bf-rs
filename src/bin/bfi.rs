@@ -58,22 +58,36 @@ struct NewOptions {
         help = "Memory size in bytes (default 30,000)"
     )]
     memory_size: usize,
-    #[clap(short = 'u', long="unchecked", help = "Omit memory bounds checks in JIT", conflicts_with_all = &["ast", "rle", "bytecode", "peephole", "llvm"], requires = "jit")]
+    #[clap(
+        short = 'u',
+        long = "unchecked",
+        help = "Omit memory bounds checks in JIT"
+    )]
     unchecked: bool,
-    #[clap(long = "ast", help = "Interpret the unoptimized AST", conflicts_with_all=&["rle", "bytecode", "unchecked", "peephole", "jit", "llvm"])]
+    #[clap(long = "ast", help = "Interpret the unoptimized AST", group = "pass")]
     ast: bool,
-    #[clap(long="rle", help = "Interpret the run-length encoded the AST", conflicts_with_all=&["ast", "bytecode", "peephole", "jit", "llvm", "unchecked"])]
+    #[clap(
+        long = "rle",
+        help = "Interpret the run-length encoded the AST",
+        group = "pass"
+    )]
     rle: bool,
-    #[clap(long = "byte", help = "Compile AST to bytecode", conflicts_with_all=&["ast", "rle", "jit", "llvm", "unchecked"])]
+    #[clap(long = "byte", help = "Compile AST to bytecode", group = "pass")]
     bytecode: bool,
-    #[clap(long="peep", help = "Interpret the peephole-optimized AST", conflicts_with_all = &["ast", "rle", "bytecode", "jit", "llvm", "unchecked"])]
+    #[clap(
+        long = "peep",
+        help = "Interpret the peephole-optimized AST",
+        group = "pass"
+    )]
     peephole: bool,
-    #[cfg(feature = "jit")]
-    #[clap(long = "jit", help = "JIT to native x64 (default)", default_value_t = true, conflicts_with_all = &["ast", "rle", "bytecode", "peephole", "llvm"])]
+    #[clap(long = "jit", help = "JIT to native x64 (default)", group = "pass")]
     jit: bool,
     #[cfg(feature = "llvm")]
-    #[clap(long = "llvm", help = "JIT using LLVM", conflicts_with_all = &["ast", "rle", "bytecode", "peephole", "jit", "unchecked"])]
+    #[clap(long = "llvm", help = "JIT using LLVM", group = "pass")]
     llvm: bool,
+    #[cfg(feature = "cranelift")]
+    #[clap(long = "cranelift", help = "JIT using Cranelift", group = "pass")]
+    cranelift: bool,
 }
 #[derive(Debug, Clone)]
 struct Options {
@@ -99,10 +113,11 @@ enum Pass {
     Rle,
     Bytecode,
     Peephole,
-    #[cfg(feature = "jit")]
     Jit,
     #[cfg(feature = "llvm")]
     Llvm,
+    #[cfg(feature = "cranelift")]
+    Cranelift,
 }
 impl Pass {
     fn new(options: &NewOptions) -> Pass {
@@ -118,13 +133,16 @@ impl Pass {
         if options.peephole {
             return Pass::Peephole;
         }
-        #[cfg(feature = "jit")]
         if options.jit {
             return Pass::Jit;
         }
         #[cfg(feature = "llvm")]
         if options.llvm {
             return Pass::Llvm;
+        }
+        #[cfg(feature = "cranelift")]
+        if options.cranelift {
+            return Pass::Cranelift;
         }
         Pass::Peephole
     }
@@ -176,10 +194,16 @@ fn main() {
             interpret(&*program, &options);
         }
 
-        #[cfg(feature = "jit")]
         Pass::Jit => {
-            let program = program.jit_compile(!options.unchecked);
-            interpret(&program, &options);
+            #[cfg(feature = "jit")]
+            {
+                let program = program.jit_compile(!options.unchecked);
+                interpret(&program, &options);
+            }
+            #[cfg(not(feature = "jit"))]
+            {
+                error_exit(1, "error: jit feature not enabled.");
+            }
         }
 
         #[cfg(feature = "llvm")]
@@ -187,6 +211,12 @@ fn main() {
             program
                 .llvm_run(options.memory_size)
                 .unwrap_or_else(|e| error_exit(3, &format!("runtime error: {}.", e)));
+        }
+
+        #[cfg(feature = "cranelift")]
+        Pass::Cranelift => {
+            let program = program.cranelift_compile();
+            interpret(&program, &options);
         }
     }
 }
