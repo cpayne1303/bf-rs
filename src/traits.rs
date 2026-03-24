@@ -1,12 +1,14 @@
 //! Contains the Interpretable trait, which provides a common interface for running a Brainfuck
 //! program.
 
-use std::io::{stdin, stdout, Cursor, Read, Write};
+use std::io::{Cursor, Read, Write, stdin, stdout};
 
 use crate::common::BfResult;
 use crate::state::State;
 
 pub use crate::bytecode::BytecodeCompilable;
+#[cfg(feature = "cranelift")]
+pub use crate::cranelift::CraneliftCompilable;
 #[cfg(feature = "jit")]
 pub use crate::jit::JitCompilable;
 #[cfg(feature = "llvm")]
@@ -18,7 +20,7 @@ pub use crate::rle::RleCompilable;
 pub trait Interpretable {
     /// Interprets a program against the given state.
     fn interpret_state<R: Read, W: Write>(&self, state: State, input: R, output: W)
-        -> BfResult<()>;
+    -> BfResult<()>;
 
     /// Interprets a program. If the given `size` is `None`, the default memory size.
     fn interpret<R: Read, W: Write>(

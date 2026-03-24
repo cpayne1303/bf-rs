@@ -79,7 +79,7 @@ impl BoundsAnalysis for AbstractInterpreter {
     ///
     /// Returns whether we can prove that this move will not underflow.
     fn move_left(&mut self, count: Count) -> bool {
-        let count = count;
+        let count = count as usize;
 
         self.right_mark += count;
         if count <= self.left_mark {
@@ -95,7 +95,7 @@ impl BoundsAnalysis for AbstractInterpreter {
     ///
     /// Returns whether we can prove that this move will not overflow.
     fn move_right(&mut self, count: Count) -> bool {
-        let count = count;
+        let count = count as usize;
 
         self.left_mark += count;
         if count <= self.right_mark {

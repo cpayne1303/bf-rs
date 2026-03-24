@@ -1,5 +1,5 @@
 [package]
-edition = "2021"
+edition = "2024"
 name = "bf"
 version = "0.4.9-alpha.0"
 authors = ["Jesse A. Tov <jesse.tov@gmail.com>"]
@@ -27,6 +27,10 @@ u32count = []
 # Use `u16` for counts instead of usize.
 u16count = []
 
+# Enables Cranelift-based JIT
+cranelift = ["cranelift-module", "cranelift-jit", "cranelift-frontend", "cranelift-native", "cranelift-codegen"]
+cranelift-codegen = ["dep:cranelift-codegen"]
+
 [dependencies]
 clap = { version = "4.5.20", features = ["derive"] }
 
@@ -34,6 +38,11 @@ dynasmrt = { version = "3.0.1", optional = true }
 dynasm = { version = "3.2.0", optional = true }
 
 llvm-sys = { version = "130", optional = true }
+cranelift-module = { version = "0.130.0", optional = true }
+cranelift-jit = { version = "0.130.0", optional = true }
+cranelift-frontend = { version = "0.130.0", optional = true }
+cranelift-native = { version = "0.130.0", optional = true }
+cranelift-codegen = { version = "0.130.0", optional = true }
 
 [package.metadata.docs.rs]
 features = ["jit"]
